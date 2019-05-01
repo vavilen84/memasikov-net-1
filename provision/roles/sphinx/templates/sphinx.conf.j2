@@ -1,0 +1,178 @@
+#
+# Sphinx configuration file
+#
+
+#############################################################################
+## data source definition
+#############################################################################
+
+source default
+{
+        type                    = mysql
+        sql_host                = {{ mysql_app_host }}
+        sql_user                = {{ mysql_app_user }}
+        sql_pass                = {{ mysql_app_pass }}
+        sql_port                = 3306  # optional, default is 3306
+
+        sql_query_pre           = SET NAMES utf8
+        sql_query_pre           = SET SESSION query_cache_type=OFF
+}
+
+source images_default : default
+{
+    sql_db              = memasikov-net
+	sql_attr_uint		= created
+    sql_attr_uint		= updated
+    sql_attr_uint		= id
+	sql_field_string    = uid
+    sql_field_string    = ext
+	sql_field_string    = tags
+}
+
+source images : images_default
+{
+	sql_query_pre 	= UPDATE sphinx_index SET last_doc_id = (SELECT MAX(id) FROM image) WHERE index_name='image'
+
+        sql_query_killlist = SELECT id FROM image WHERE updated > (SELECT updated FROM sphinx_index WHERE index_name='image')
+
+        sql_query               = \
+                SELECT id, uid, ext, tags, created, updated  \
+                FROM image i\
+		WHERE id<=( SELECT last_doc_id FROM sphinx_index WHERE index_name='image' )
+}
+
+source images_delta : images_default
+{
+        sql_query               = \
+            SELECT id, uid, ext, tags, created, updated  \
+                FROM image i\
+		WHERE id>( SELECT last_doc_id FROM sphinx_index WHERE index_name='image' )
+
+	sql_query_post		= UPDATE sphinx_index SET last_doc_id = (SELECT MAX(id) FROM image), updated = UNIX_TIMESTAMP() WHERE index_name='image'
+}
+
+#############################################################################
+source user_images_default : default
+{
+    sql_db              = memasikov-net
+    sql_attr_uint		= created
+    sql_attr_uint		= user_id
+    sql_attr_uint		= status
+    sql_attr_uint		= id
+    sql_attr_uint		= base_image_id
+	sql_field_string    = uid
+    sql_field_string    = json
+}
+
+source user_images : user_images_default
+{
+	sql_query_pre 	= UPDATE sphinx_index SET last_doc_id = (SELECT MAX(id) FROM image) WHERE index_name='user_image'
+
+        sql_query_killlist = SELECT id FROM user_image WHERE updated > (SELECT updated FROM sphinx_index WHERE index_name='user_image')
+
+        sql_query               = \
+                SELECT id, uid, status, user_id, created, json, base_image_id  \
+                FROM user_image i\
+		WHERE id<=( SELECT last_doc_id FROM sphinx_index WHERE index_name='user_image' )
+}
+
+source user_images_delta : user_images_default
+{
+        sql_query               = \
+                SELECT id, uid, status, user_id, created, json, base_image_id  \
+                FROM user_image i\
+		WHERE id>( SELECT last_doc_id FROM sphinx_index WHERE index_name='user_image' )
+
+	sql_query_post		= UPDATE sphinx_index SET last_doc_id = (SELECT MAX(id) FROM user_image), updated = UNIX_TIMESTAMP() WHERE index_name='user_image'
+}
+
+################################################################################
+
+#############################################################################
+## index definition
+#############################################################################
+
+index images
+{
+    charset_table = 0..9, A..Z->a..z, _, a..z, \
+        U+410..U+42F->U+430..U+44F, U+430..U+44F, U+401->U+451, U+451, U+0027
+	type			= plain
+	source			= images
+	path			= {{ sphinx_index_folder }}/images
+	docinfo			= extern
+	mlock			= 1
+	morphology		= none
+
+	min_word_len		= 2
+	min_infix_len           = 2
+	enable_star 		= 1
+	charset_type		= utf-8
+    html_strip = 1
+
+}
+
+index images_delta: images
+{
+	source			= images_delta
+	path			= {{ sphinx_index_folder }}/images_delta
+}
+
+index user_images
+{
+    charset_table = 0..9, A..Z->a..z, _, a..z, \
+        U+410..U+42F->U+430..U+44F, U+430..U+44F, U+401->U+451, U+451, U+0027
+	type			= plain
+	source			= images
+	path			= {{ sphinx_index_folder }}/user_images
+	docinfo			= extern
+	mlock			= 1
+	morphology		= none
+
+	min_word_len		= 2
+	min_infix_len           = 2
+	enable_star 		= 1
+	charset_type		= utf-8
+    html_strip = 1
+
+}
+
+index user_images_delta: user_images
+{
+	source			= user_images_delta
+	path			= {{ sphinx_index_folder }}/user_images_delta
+}
+
+#############################################################################
+## indexer settings
+#############################################################################
+
+indexer
+{
+	mem_limit		= {{ sphinx_indexer_mem_limit }}
+	write_buffer		= {{ sphinx_indexer_write_buffer }}
+	max_file_field_buffer	= {{ sphinx_indexer_max_file_field_buffer }}
+	max_iops = {{ sphinx_indexer_max_iops }}
+}
+
+#############################################################################
+## searchd settings
+#############################################################################
+
+searchd
+{
+	listen			= 9312
+	listen			= 9306:mysql41
+
+	log			= /var/log/searchd.log
+	query_log		= /var/log/query.log
+	read_timeout		= 5
+	client_timeout		= 300
+	max_children		= 30
+	pid_file		= /var/log/searchd.pid
+	max_matches		= 100000
+	seamless_rotate		= 1
+	preopen_indexes		= 1
+	unlink_old		= 1
+}
+
+# --eof--

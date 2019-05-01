@@ -1,0 +1,2 @@
+[dev]
+10.0.77.77 ansible_ssh_user=vagrant ansible_ssh_private_key_file=/var/www/memasikov.net/.vagrant/machines/memasikov.net/virtualbox/private_key

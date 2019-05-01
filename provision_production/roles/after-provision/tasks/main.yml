@@ -1,0 +1,4 @@
+- include: migrations.yml
+- include: restart_services.yml
+- include: crontab.yml
+- include: index.yml

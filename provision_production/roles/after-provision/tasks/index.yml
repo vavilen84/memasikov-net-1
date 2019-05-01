@@ -1,0 +1,2 @@
+- name: crontab
+  template: src=index.php.j2 dest=/var/www/memasikov.net/web/index.php

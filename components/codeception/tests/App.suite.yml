@@ -1,0 +1,15 @@
+class_name: AppTester
+modules:
+    enabled:
+        - PhpBrowser
+        - Db
+        - ParseHelper
+    config:
+        PhpBrowser:
+            url: ''
+        Db:
+            dsn: 'mysql:host=localhost;dbname=samplemix'
+            user: 'root'
+            password: '123456'
+        ParseHelper:
+          url: ''

@@ -1,0 +1,1 @@
+$(document).ready(function(){new(Backbone.View.extend({el:".container",events:{"click .tag":"addTag"},initialize:function(){},addTag:function(e){e.preventDefault();var a=$(e.currentTarget).text(),n=$("#addimageurlform-tags"),t=n.val();t=t||"";var i=t?t+", "+a:a;n.val(i)}}))});

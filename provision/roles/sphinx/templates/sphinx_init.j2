@@ -1,0 +1,97 @@
+#!/bin/bash
+#
+# Init file for searchd
+#
+
+SUDO_USER=root
+
+BASE_PATH=/usr/local
+PID_FILE=/var/log/searchd.pid
+CONFIG_FILE=$BASE_PATH/etc/sphinx.conf
+
+EXEC_PATH=$BASE_PATH/bin
+LOG_PATH=/var/log
+DATA_PATH={{ sphinx_index_folder }}
+
+RETVAL=0
+prog="searchd"
+
+
+do_start() {
+	echo "Starting $prog"
+	sudo -u $SUDO_USER $EXEC_PATH/$prog --config $CONFIG_FILE
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+do_stop() {
+	echo "Stopping $prog"
+	if [ -e $PID_FILE ] ; then
+		sudo -u $SUDO_USER $EXEC_PATH/$prog --stopwait
+		if [ -e $PID_FILE ] ; then
+			echo "WARNING: searchd may still be alive: $PID_FILE"
+		fi
+	fi
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+do_status() {
+	RETVAL=$?
+	if [ -e $PID_FILE ] ; then
+ 		sudo -u $SUDO_USER $EXEC_PATH/$prog --status
+		echo "---"
+		echo "$prog is running (`cat $PID_FILE`)"
+	else
+		echo "$prog is not running"
+	fi
+	return $RETVAL
+}
+
+do_reindex() {
+	echo "Reindexing all $prog indexes"
+	if [ -e $PID_FILE ] ; then
+		sudo -u $SUDO_USER $EXEC_PATH/indexer --all --rotate
+	else
+		sudo -u $SUDO_USER $EXEC_PATH/indexer --all
+	fi
+	echo "done."
+	echo
+	RETVAL=$?
+	return $RETVAL
+}
+
+case $* in
+
+
+start)
+	do_start
+	;;
+
+stop)
+	do_stop
+	;;
+
+restart)
+	do_stop
+	do_start
+	;;
+
+status)
+	do_status
+	;;
+
+reindex)
+	do_reindex
+	;;
+
+*)
+	echo "usage: $0 {start|stop|restart|status|reindex}" >&2
+
+	exit 1
+	;;
+esac
+
+exit $RETVAL

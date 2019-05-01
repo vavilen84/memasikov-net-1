@@ -1,0 +1,11 @@
+sphinx_version: 2.2.11-release
+with_pgsql: false
+sphinx_index_folder: /var/lib/sphinx
+mysql_app_host: localhost
+mysql_app_user: root
+mysql_app_pass: 123456
+
+sphinx_indexer_mem_limit: 256M
+sphinx_indexer_write_buffer: 4M
+sphinx_indexer_max_file_field_buffer: 128M
+sphinx_indexer_max_iops: 40

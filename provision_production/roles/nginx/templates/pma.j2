@@ -1,0 +1,25 @@
+server
+{
+    include     ports/ssl.conf;
+    server_name {{ item.server_name }};
+    root        {{ item.root }};
+
+    include enable/ssl.conf;
+	ssl_certificate    {{ nginx_certs_folder }}certificate.crt;
+	ssl_certificate_key {{ nginx_certs_folder }}private.key;
+	ssl_dhparam {{ nginx_certs_folder }}dhparam.pem;
+
+    include         limits/methods.conf;
+    include         locations/favicon.conf;
+    include         locations/favicon_apple.conf;
+	include         locations/static.conf;
+    include         locations/php.conf;
+
+    ########## Your custom locations & settings ##########
+    location / {
+        index index.php;
+        auth_basic           "Злобный хацкер - ТЫ НЕ ПРОЙДЕШЬ!";
+        auth_basic_user_file {{ nginx_http_basic_auth_file }};
+    }
+}
+

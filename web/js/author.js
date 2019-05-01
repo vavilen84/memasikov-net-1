@@ -1,0 +1,1 @@
+$(document).ready(function(){new(Backbone.View.extend({el:".container",events:{},initialize:function(){}}))});

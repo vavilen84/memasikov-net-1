@@ -1,0 +1,6 @@
+mysql_app_user: root
+mysql_app_pass: 123456
+mysql_root_pass: 123456
+mysql_databases: [
+    memasikov-net
+]

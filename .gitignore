@@ -1,0 +1,14 @@
+.idea
+/vendor
+.vagrant
+/web/uploads
+!/web/uploads/.gitignore
+/web/author/uploads
+!/web/author/uploads/.gitignore
+/config/params-local.php
+/config/mailer.php
+/provision/dev.retry
+/provision/production.retry
+/web/source/node_modules/*
+/web/index.php
+/web/sitemap.xml

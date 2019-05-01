@@ -1,0 +1,54 @@
+- set_fact: sphinx_installed=0
+- set_fact: installed_correct_sphinx_version=0
+
+- name: be sure required packages are installed
+  apt: pkg={{ item }} state=present
+  with_items:
+    - libmysqlclient-dev
+    - mysql-client
+    - libc6-dev
+    - libc6
+    - make
+    - gcc
+    - g++
+
+- name: determine current sphinx version
+  shell: search | head -n 1 | awk -F ' ' '{print $2}'
+  register: current_sphinx_version
+
+- set_fact: sphinx_installed=1
+  when: not current_sphinx_version.stderr
+
+- set_fact: installed_correct_sphinx_version=1
+  when: current_sphinx_version.stdout == sphinx_version
+
+- name: download and unpack Sphinx
+  shell: chdir=/tmp wget http://sphinxsearch.com/files/sphinx-{{ sphinx_version }}.tar.gz -O sphinx.tar.gz && tar -zxvf sphinx.tar.gz
+  when: installed_correct_sphinx_version == '0'
+
+- name: configure Sphinx
+  shell: cd /tmp/sphinx-{{ sphinx_version }} && sudo ./configure
+  when: not with_pgsql and installed_correct_sphinx_version == '0'
+
+- name: configure Sphinx with pgsql support
+  shell: cd /tmp/sphinx-{{ sphinx_version }} && sudo ./configure --with-pgsql
+  when: with_pgsql and installed_correct_sphinx_version == '0'
+
+- name: compile and install Sphinx
+  shell: cd /tmp/sphinx-{{ sphinx_version }} && sudo make && sudo make install
+  when: installed_correct_sphinx_version == '0'
+
+- name: copy Sphinx config
+  template: src=sphinx.conf.j2 dest=/usr/local/etc/sphinx.conf owner=root mode=0644
+
+- name: create directory to store sphinx indexes
+  shell: creates={{ sphinx_index_folder }} mkdir {{ sphinx_index_folder }} owner=root mode=0644
+
+- name: add init script for Sphinx
+  template: src=sphinx_init.j2 dest=/etc/init.d/sphinx owner=root group=root mode=0755
+
+- name: load Sphinx on system start
+  shell: update-rc.d sphinx defaults
+
+- name: copy sequrity limits config for Sphinx
+  template: src=limits.conf.j2 dest=/etc/security/limits.conf owner=root mode=0644

@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: *?*
+Host: memasikov.net
+Sitemap: https://memasikov.net/sitemap.xml
